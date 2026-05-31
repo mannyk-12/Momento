@@ -13,8 +13,6 @@ Momento solves the chaotic problem of post-event media sharing. Instead of losin
 - **Authentication:** Firebase Auth (Email/Password & Google OAuth)
 - **Database:** Firebase Firestore (NoSQL)
 - **Storage:** Firebase Cloud Storage
-- **Icons:** Lucide React
-- **Animation:** Framer Motion
 
 ## ✨ Key Features
 
@@ -104,11 +102,3 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 - **Role Assignment:** Role assignment is handled securely via custom Firebase Auth claims set by the `/api/auth/set-role` route. Normal users cannot spoof their role on the client side.
 - **Admin Auto-provisioning:** If a user signs up with the email defined in `NEXT_PUBLIC_ADMIN_EMAIL`, they are automatically granted maximum privileges. Make sure this environment variable is kept secure in production.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
