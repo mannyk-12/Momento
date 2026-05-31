@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# next build
+.next/
+
+# env files
+.env
+.env.local
+
+# firebase logs
+firebase-debug.log
+*.log
+
+# testing
+playwright-report/
+test-results/
+tests/
+
+# git
+.git
+.gitignore
+
+# internal docs
+AGENTS.md
+CLAUDE.md
+
+# temp files
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# firebase admin sdk secrets
+*firebase-adminsdk*.json

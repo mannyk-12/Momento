@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Reusable function to check if user is an Admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.role == 'Admin';
+    }
+
+    // Reusable function to check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    match /users/{userId} {
+      // Anyone can read user profiles (needed for names/mentions)
+      allow read: if isAuth();
+      // Users can update their own profile; Admins can update any
+      allow create, update: if isAuth() && (request.auth.uid == userId || isAdmin());
+      // Only Admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    match /clubs/{clubId} {
+      allow read: if true;
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      // Read: All authenticated users can read the collection (filtering happens client-side)
+      allow read: if isAuth();
+      // Create: Admin, Photographer, or Club Member
+      allow create: if isAuth() && (
+        isAdmin() || 
+        request.auth.token.role == 'Photographer' || 
+        request.auth.token.role == 'Club Member'
+      );
+      // Update: Admin or the user who created it
+      allow update: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.createdBy
+      );
+      // Delete: Admin or the user who created it
+      allow delete: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.createdBy
+      );
+    }
+
+    match /media/{mediaId} {
+      // Read follows event read rules (simplified by just allowing authenticated read, 
+      // actual filtering happens in queries which match event IDs)
+      allow read: if isAuth();
+      // Create: Admin, Photographer, Club Member, OR explicitly approved uploader
+      allow create: if isAuth() && (
+        isAdmin() || 
+        request.auth.token.role == 'Photographer' || 
+        request.auth.token.role == 'Club Member' ||
+        (get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.get('approvedUploaderIds', [])).hasAny([request.auth.uid])
+      );
+      // Update: Admin, uploader, or anyone just updating likes/favorites
+      allow update: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.uploadedBy ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'favoritedBy'])
+      );
+      allow delete: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.uploadedBy
+      );
+    }
+
+    match /comments/{commentId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.userId ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy'])
+      );
+      allow delete: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.userId
+      );
+    }
+
+    match /notifications/{notificationId} {
+      // Only the recipient can read their notifications, or Admin
+      allow read: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.recipientId
+      );
+      // Anyone can create a notification (e.g. liking a post)
+      allow create: if isAuth();
+      // Only recipient or Admin can update (e.g. mark as read)
+      allow update, delete: if isAuth() && (
+        isAdmin() || 
+        request.auth.uid == resource.data.recipientId
+      );
+    }
+  }
+}

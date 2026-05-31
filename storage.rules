@@ -1,0 +1,36 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isAdmin() {
+      return request.auth != null && request.auth.token.role == 'Admin';
+    }
+    
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    match /events/{eventId}/{fileName} {
+      // Anyone authenticated can view media
+      allow read: if isAuth();
+      
+      // Uploads require auth, metadata, correct file type, and < 50MB size
+      allow create: if isAuth() && 
+                    request.resource.metadata != null &&
+                    request.resource.metadata.uploadedBy == request.auth.uid &&
+                    request.resource.size < 50 * 1024 * 1024 &&
+                    (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
+                    
+      // Deletion requires Admin OR being the original uploader
+      allow delete: if isAuth() && (
+        isAdmin() || 
+        resource.metadata.uploadedBy == request.auth.uid
+      );
+    }
+    
+    match /{allPaths=**} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+  }
+}
