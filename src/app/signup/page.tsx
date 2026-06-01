@@ -48,7 +48,7 @@ export default function SignupPage() {
     if (role === 'Club Member') {
       if (isCreatingClub) {
         if (!newClubName.trim()) throw new Error("Please enter a new club name.");
-        // Create the new club
+        // Create the new club (Must happen AFTER authentication)
         const clubDocRef = await addDoc(collection(db, 'clubs'), {
           name: newClubName.trim(),
           createdAt: new Date().toISOString()
@@ -62,6 +62,7 @@ export default function SignupPage() {
     return finalClubId;
   };
 
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -69,11 +70,19 @@ export default function SignupPage() {
 
     try {
       if (!role) throw new Error("Please select a role before signing up.");
-      const finalClubId = await validateClubSelection();
+      
+      // Pre-flight check for club inputs before creating auth account
+      if (role === 'Club Member') {
+        if (isCreatingClub && !newClubName.trim()) throw new Error("Please enter a new club name.");
+        if (!isCreatingClub && !selectedClubId) throw new Error("Please select a club.");
+      }
 
-      // Create user in Firebase Auth
+      // Create user in Firebase Auth FIRST
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // NOW validate and create club in Firestore (since isAuth() is true)
+      const finalClubId = await validateClubSelection();
 
       // Save user profile in Firestore
       await setDoc(doc(db, 'users', user.uid), {
@@ -109,7 +118,12 @@ export default function SignupPage() {
 
     try {
       if (!role) throw new Error("Please select a role before signing up.");
-      const finalClubId = await validateClubSelection();
+      
+      // Pre-flight check
+      if (role === 'Club Member') {
+        if (isCreatingClub && !newClubName.trim()) throw new Error("Please enter a new club name.");
+        if (!isCreatingClub && !selectedClubId) throw new Error("Please select a club.");
+      }
 
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -122,6 +136,9 @@ export default function SignupPage() {
         router.push('/dashboard');
         return;
       }
+
+      // NOW validate and create club in Firestore
+      const finalClubId = await validateClubSelection();
 
       // Save new user profile
       await setDoc(doc(db, 'users', user.uid), {

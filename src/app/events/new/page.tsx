@@ -39,8 +39,8 @@ export default function NewEventPage() {
     );
   }
 
-  // Must have a club to create events
-  if (!clubId) {
+  // Club Members must have a club to create events
+  if (role === 'Club Member' && !clubId) {
     return (
       <div className={styles.container}>
         <div className={styles.glassPanel}>
@@ -66,7 +66,7 @@ export default function NewEventPage() {
         coverImage: null,
         createdBy: user.uid,
         clubId: clubId,
-        isPrivate: isPrivate,
+        isPrivate: role === 'Photographer' ? false : isPrivate,
         createdAt: new Date().toISOString()
       };
 
@@ -113,6 +113,7 @@ export default function NewEventPage() {
                 type="date" 
                 id="date"
                 value={date}
+                max={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setDate(e.target.value)}
                 required 
               />
@@ -179,32 +180,34 @@ export default function NewEventPage() {
             />
           </div>
 
-          <div className={styles.privacySection}>
-            <label className={styles.privacyLabel}>Event Privacy</label>
-            <div className={styles.privacyOptions}>
-              <div 
-                className={`${styles.privacyCard} ${!isPrivate ? styles.activePrivacy : ''}`}
-                onClick={() => setIsPrivate(false)}
-              >
-                <Globe size={24} />
-                <div className={styles.privacyContent}>
-                  <h4>Public Event</h4>
-                  <p>Visible to everyone on the platform.</p>
+          {role !== 'Photographer' && (
+            <div className={styles.privacySection}>
+              <label className={styles.privacyLabel}>Event Privacy</label>
+              <div className={styles.privacyOptions}>
+                <div 
+                  className={`${styles.privacyCard} ${!isPrivate ? styles.activePrivacy : ''}`}
+                  onClick={() => setIsPrivate(false)}
+                >
+                  <Globe size={24} />
+                  <div className={styles.privacyContent}>
+                    <h4>Public Event</h4>
+                    <p>Visible to everyone on the platform.</p>
+                  </div>
                 </div>
-              </div>
 
-              <div 
-                className={`${styles.privacyCard} ${isPrivate ? styles.activePrivacy : ''}`}
-                onClick={() => setIsPrivate(true)}
-              >
-                <Lock size={24} />
-                <div className={styles.privacyContent}>
-                  <h4>Private Event</h4>
-                  <p>Visible only to members of your club.</p>
+                <div 
+                  className={`${styles.privacyCard} ${isPrivate ? styles.activePrivacy : ''}`}
+                  onClick={() => setIsPrivate(true)}
+                >
+                  <Lock size={24} />
+                  <div className={styles.privacyContent}>
+                    <h4>Private Event</h4>
+                    <p>Visible only to members of your club.</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>
             {loading ? <Loader2 className={styles.spinnerIcon} /> : 'Create Event'}

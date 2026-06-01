@@ -2,15 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Reusable function to check if user is an Admin
-    function isAdmin() {
-      return request.auth != null && request.auth.token.role == 'Admin';
-    }
-
     // Reusable function to check if user is authenticated
     function isAuth() {
       return request.auth != null;
     }
+
+    // Safely get the user's role from the database to fallback if JWT token is out of sync
+    function getUserRole() {
+      return isAuth() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
+    }
+
+    // Reusable function to check if user is an Admin
+    function isAdmin() {
+      return isAuth() && (request.auth.token.role == 'Admin' || getUserRole() == 'Admin');
+    }
+
 
     match /users/{userId} {
       // Anyone can read user profiles (needed for names/mentions)
@@ -34,7 +40,9 @@ service cloud.firestore {
       allow create: if isAuth() && (
         isAdmin() || 
         request.auth.token.role == 'Photographer' || 
-        request.auth.token.role == 'Club Member'
+        request.auth.token.role == 'Club Member' ||
+        getUserRole() == 'Photographer' || 
+        getUserRole() == 'Club Member'
       );
       // Update: Admin or the user who created it
       allow update: if isAuth() && (
@@ -57,6 +65,8 @@ service cloud.firestore {
         isAdmin() || 
         request.auth.token.role == 'Photographer' || 
         request.auth.token.role == 'Club Member' ||
+        getUserRole() == 'Photographer' || 
+        getUserRole() == 'Club Member' ||
         (get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.get('approvedUploaderIds', [])).hasAny([request.auth.uid])
       );
       // Update: Admin, uploader, or anyone just updating likes/favorites

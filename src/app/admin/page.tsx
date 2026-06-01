@@ -6,7 +6,7 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { useAuth } from '../../lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Users, Calendar, Image as ImageIcon, BarChart3, Database, Lock, Globe, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Image as ImageIcon, BarChart3, Database, Lock, Globe, Plus, Search, Trash2, Video } from 'lucide-react';
 import styles from './admin.module.css';
 import { MomentoEvent } from '../../lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -295,6 +295,16 @@ export default function AdminDashboard() {
                     <span>{new Date(event.date).toLocaleDateString()}</span>
                   </div>
                   <p className={styles.cardDescription}>{event.description}</p>
+                  
+                  {/* Media Stats */}
+                  <div className={styles.mediaStats}>
+                    <div className={styles.statItem}>
+                      <ImageIcon size={14} /> <span>{event.photoCount || 0}</span>
+                    </div>
+                    <div className={styles.statItem}>
+                      <Video size={14} /> <span>{event.videoCount || 0}</span>
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))

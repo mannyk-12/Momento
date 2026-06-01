@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     
     // Also update the Firestore users document directly from the backend to bypass client rules
     const adminDb = (await import('firebase-admin/firestore')).getFirestore();
-    await adminDb.collection('users').doc(uid).update({ role: assignedRole });
+    await adminDb.collection('users').doc(uid).set({ role: assignedRole }, { merge: true });
 
     return NextResponse.json({ message: `Role ${role} assigned successfully` });
   } catch (error: any) {
