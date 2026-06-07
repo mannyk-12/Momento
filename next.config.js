@@ -11,6 +11,7 @@ const nextConfig = {
     ],
   },
   trailingSlash: true,
+  transpilePackages: ['firebase-admin'],
 }
 
 module.exports = nextConfig

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminAuth } from '../../../../lib/firebase/admin';
+import { adminAuth, adminDb } from '../../../../lib/firebase/admin';
 
 export async function POST(req: Request) {
   try {
@@ -23,7 +23,6 @@ export async function POST(req: Request) {
     await adminAuth.deleteUser(uid);
 
     // 2. Delete user document from Firestore
-    const adminDb = (await import('firebase-admin/firestore')).getFirestore();
     await adminDb.collection('users').doc(uid).delete();
 
     // Note: To be fully robust, we would also delete their events, media, and comments here.

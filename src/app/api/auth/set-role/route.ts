@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase/admin';
+import { adminAuth, adminDb } from '@/lib/firebase/admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     await adminAuth.setCustomUserClaims(uid, claims);
     
     // Also update the Firestore users document directly from the backend to bypass client rules
-    const adminDb = (await import('firebase-admin/firestore')).getFirestore();
     await adminDb.collection('users').doc(uid).set({ role: assignedRole }, { merge: true });
 
     return NextResponse.json({ message: `Role ${role} assigned successfully` });
