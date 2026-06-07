@@ -7,14 +7,14 @@ Momento solves the chaotic problem of post-event media sharing. Instead of losin
 
 ---
 
-## 🌐 Live Production Application
+## Live Production Application
 **Deployed Link:** [https://momento-eb6d7.web.app/](https://momento-eb6d7.web.app/)
 
 The application is fully hosted on Firebase Hosting using Firebase Web Frameworks to support Next.js App Router and Server-Side Rendering.
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **Frontend Library:** React 19
@@ -27,7 +27,7 @@ The application is fully hosted on Firebase Hosting using Firebase Web Framework
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Role-Based Access Control (RBAC):** Distinct roles for **Admin** (universal access and user management), **Club Member** (can view and engage with their club's media), **Photographer** (can upload high-res media to assigned events), and **Viewer**. Role management is securely handled via backend custom claims and Firestore rules.
 - **Event-wise Organization:** Media is strictly categorized by events and clubs. Photographers can create public events, while club members can create private events restricted to their club.
@@ -38,7 +38,7 @@ The application is fully hosted on Firebase Hosting using Firebase Web Framework
 
 ---
 
-## 🛠️ Local Development Setup
+## Local Development Setup
 
 Follow these precise instructions to get a copy of the project running on your local machine.
 
@@ -134,7 +134,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🚢 Deployment Guide
+## Deployment Guide
 
 Momento uses **Firebase Hosting with Web Frameworks** to support Next.js App Router SSR out of the box.
 
@@ -176,7 +176,7 @@ firebase deploy --only firestore:rules
 
 ---
 
-## 🔒 Security Architecture
+## Security Architecture
 
 - **Server-Side Role Assignment:** Role assignment is handled strictly via backend API routes (`/api/auth/set-role`) using the Firebase Admin SDK to assign Custom JWT Claims. Normal users cannot spoof their role on the client side.
 - **Double Verification:** `firestore.rules` securely checks BOTH the user's JWT token and their fallback database profile document to guarantee permissions are never bypassed due to out-of-sync tokens.

@@ -1,4 +1,4 @@
-# 🏛️ Momento Architecture Diagram
+# Momento Architecture Diagram
 
 The following diagram illustrates the complete end-to-end architecture of Momento, showing how the Users, Next.js Frontend, Firebase Auth, NoSQL Database, and Cloud infrastructure connect together.
 

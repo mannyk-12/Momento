@@ -1,4 +1,4 @@
-# 🗄️ Database Schema & Architecture
+# Database Schema & Architecture
 
 Momento utilizes **Google Cloud Firestore**, a highly scalable, serverless NoSQL document database. Our schema is heavily optimized for fast, read-heavy workloads (like rendering high-volume media feeds) while maintaining strict role-based access control (RBAC).
 
@@ -6,7 +6,7 @@ This document outlines the precise data models, collection structures, relationa
 
 ---
 
-## 🏗️ Core Collections
+## Core Collections
 
 ### 1. `users`
 Acts as the central source of truth for user profiles, access control, and fallback security verification.
@@ -148,7 +148,7 @@ interface Notification {
 
 ---
 
-## 🔗 Relational Strategy & NoSQL Patterns
+## Relational Strategy & NoSQL Patterns
 
 ### Denormalization
 To minimize database reads and optimize UI rendering, we intentionally denormalize specific data:
@@ -166,7 +166,7 @@ We maintain a `firestore.indexes.json` file which automatically generates indexe
 
 ---
 
-## 🛡️ Security Architecture
+## Security Architecture
 
 Momento implements an advanced **Dual-Verification Security Model**.
 
