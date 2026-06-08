@@ -41,14 +41,30 @@ export default function SearchPage() {
     try {
       if (activeTab === 'Photos') {
         const lowerQuery = searchQuery.trim().toLowerCase();
-        // Array-contains requires exact match on the element
+        // Tokenize query the same way as upload
+        const cleanQuery = lowerQuery.replace(/[^a-z0-9\s]/g, '');
+        const queryTokens = cleanQuery.split(' ').filter(w => w.length > 2);
+        
+        // If the user typed short words or nothing valid, fallback to full string
+        const tokensToSearch = queryTokens.length > 0 ? queryTokens : [lowerQuery];
+
+        // array-contains-any allows up to 10 elements
+        const searchTerms = tokensToSearch.slice(0, 10);
+
         const mediaQ = query(
           collection(db, 'media'), 
-          where('tags', 'array-contains', lowerQuery),
-          limit(50)
+          where('tags', 'array-contains-any', searchTerms),
+          limit(100)
         );
         const snap = await getDocs(mediaQ);
-        const results = snap.docs.map(d => ({ id: d.id, ...d.data() } as MediaItem));
+        let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as MediaItem));
+        
+        // Client-side filter to ensure ALL tokens are present (since array-contains-any is an OR operation)
+        results = results.filter(m => {
+          const mediaTagsStr = (m.tags || []).join(' ');
+          return tokensToSearch.every(token => mediaTagsStr.includes(token));
+        });
+
         setMedia(results);
       } 
       else if (activeTab === 'Events') {

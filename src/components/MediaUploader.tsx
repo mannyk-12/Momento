@@ -187,19 +187,34 @@ export default function MediaUploader({ eventId }: MediaUploaderProps) {
 
               // Extract manual mentions/tags
               let manualTags: string[] = [];
-              if (rawTags.includes('@')) {
-                const matches = rawTags.match(/@([a-zA-Z0-9_]+)/g) || [];
-                manualTags = matches.map(m => m.substring(1));
-              } else {
-                manualTags = rawTags
-                  .split(',')
-                  .map(name => name.trim())
-                  .filter(name => name.length > 0);
-              }
+              const rawParts = rawTags.split(',').map(name => name.trim()).filter(name => name.length > 0);
+              
+              rawParts.forEach(part => {
+                if (part.startsWith('@')) {
+                  manualTags.push(part.substring(1));
+                } else {
+                  manualTags.push(part);
+                }
+              });
 
               // Await Vision API tags (it likely finished during the upload)
               const aiTags = await visionTagsPromise;
               const combinedTags = Array.from(new Set([...manualTags, ...aiTags]));
+
+              // Tokenization function to allow fuzzy matching in search
+              const tokenize = (text: string) => {
+                const clean = text.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+                return clean.split(' ').filter(w => w.length > 2); // only keep words > 2 letters
+              };
+              
+              // Tokenize all tags and combine them with the original full strings
+              let tokenizedTags: string[] = [...combinedTags];
+              combinedTags.forEach(tag => {
+                const tokens = tokenize(tag);
+                tokenizedTags = tokenizedTags.concat(tokens);
+              });
+              // Remove any duplicates that arose from tokenization
+              tokenizedTags = Array.from(new Set(tokenizedTags));
 
               // Save reference in Firestore
               const docRef = await addDoc(collection(db, 'media'), {
@@ -209,7 +224,7 @@ export default function MediaUploader({ eventId }: MediaUploaderProps) {
                 type: isVideo ? 'video' : 'image',
                 status: 'ready',
                 createdAt: new Date().toISOString(),
-                tags: combinedTags
+                tags: tokenizedTags
               });
 
               // Create notifications for tagged users (only manual tags which are user names)

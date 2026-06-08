@@ -238,16 +238,22 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
 
-    // Extract @mentions (simplistic approach: words starting with @)
-    const mentions = newComment
-      .split(' ')
-      .filter(word => word.startsWith('@') && word.length > 1)
-      .map(word => word.substring(1)); // in a real app, this would map names to UIDs. For now we just store the names.
-
     const text = newComment.trim();
     setNewComment(''); // Clear input
 
     try {
+      // Extract @mentions reliably by checking against all known user names
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const mentions: string[] = [];
+      const mentionedUserDocs: any[] = [];
+      
+      usersSnap.forEach(doc => {
+        const userName = doc.data().name;
+        if (userName && text.includes(`@${userName}`)) {
+          mentions.push(userName);
+          mentionedUserDocs.push({ id: doc.id, ...doc.data() });
+        }
+      });
       await addDoc(collection(db, 'comments'), {
         mediaId: media.id,
         eventId: media.eventId,
@@ -272,25 +278,21 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
         });
       }
 
-      // Find and notify mentioned users
-      if (mentions.length > 0) {
-        mentions.forEach(async (mentionName) => {
-          const q = query(collection(db, 'users'), where('name', '==', mentionName));
-          const snap = await getDocs(q);
-          snap.forEach(userDoc => {
-            if (userDoc.id !== user.uid) {
-              addDoc(collection(db, 'notifications'), {
-                recipientId: userDoc.id,
-                senderId: user.uid,
-                senderName: user.displayName || user.email?.split('@')[0] || 'Someone',
-                type: 'mention',
-                mediaId: media.id,
-                eventId: media.eventId,
-                read: false,
-                createdAt: new Date().toISOString()
-              });
-            }
-          });
+      // Notify mentioned users
+      if (mentionedUserDocs.length > 0) {
+        mentionedUserDocs.forEach((userDoc) => {
+          if (userDoc.id !== user.uid) {
+            addDoc(collection(db, 'notifications'), {
+              recipientId: userDoc.id,
+              senderId: user.uid,
+              senderName: user.displayName || user.email?.split('@')[0] || 'Someone',
+              type: 'mention',
+              mediaId: media.id,
+              eventId: media.eventId,
+              read: false,
+              createdAt: new Date().toISOString()
+            });
+          }
         });
       }
 
@@ -492,12 +494,22 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
                       </span>
                     </div>
                     <p className={styles.commentText}>
-                      {c.text.split(' ').map((word, i) => {
-                        if (word.startsWith('@')) {
-                          return <span key={i} className={styles.mention}>{word} </span>;
-                        }
-                        return word + ' ';
-                      })}
+                      {(() => {
+                        const text = c.text;
+                        const mentions = c.mentions || [];
+                        if (!mentions || mentions.length === 0) return text;
+                        
+                        const escapedMentions = mentions.map(m => `@${m}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                        const regex = new RegExp(`(${escapedMentions.join('|')})`, 'gi');
+                        const parts = text.split(regex);
+                        
+                        return parts.map((part, i) => {
+                          if (escapedMentions.some(m => new RegExp(`^${m}$`, 'i').test(part))) {
+                            return <span key={i} className={styles.mention}>{part}</span>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        });
+                      })()}
                     </p>
                     <div className={styles.commentActions}>
                       <button 
