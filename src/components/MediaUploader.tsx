@@ -9,6 +9,7 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { storage, db } from '../lib/firebase/config';
 import { useAuth } from '../lib/contexts/AuthContext';
 import styles from './MediaUploader.module.css';
+import imageCompression from 'browser-image-compression';
 
 interface MediaUploaderProps {
   eventId: string;
@@ -110,7 +111,7 @@ export default function MediaUploader({ eventId }: MediaUploaderProps) {
 
       // Start Cloud Vision API request concurrently
       const getVisionTags = async (): Promise<string[]> => {
-        if (isVideo || !process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return [];
+        if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY || isVideo) return [];
         try {
           const toBase64 = (f: File | Blob) => new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -118,22 +119,38 @@ export default function MediaUploader({ eventId }: MediaUploaderProps) {
             reader.onload = () => resolve((reader.result as string).split(',')[1]);
             reader.onerror = e => reject(e);
           });
-          const base64Image = await toBase64(finalFile);
+
+          // Downscale the image to a small thumbnail to save Vision API bandwidth/processing time
+          const thumbnailFile = await imageCompression(finalFile as File, {
+            maxWidthOrHeight: 500,
+            useWebWorker: true
+          });
+          const base64Image = await toBase64(thumbnailFile);
           const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               requests: [{
                 image: { content: base64Image },
-                features: [{ type: 'LABEL_DETECTION', maxResults: 5 }]
+                features: [
+                  { type: 'LABEL_DETECTION', maxResults: 5 },
+                  { type: 'WEB_DETECTION', maxResults: 5 }
+                ]
               }]
             })
           });
           const data = await response.json();
-          const labels = data.responses?.[0]?.labelAnnotations || [];
-          return labels
+          const annotations = data.responses?.[0] || {};
+          
+          const labelTags = (annotations.labelAnnotations || [])
             .filter((l: any) => l.score > 0.75)
             .map((l: any) => l.description.toLowerCase());
+
+          const webTags = (annotations.webDetection?.webEntities || [])
+            .filter((w: any) => w.score > 0.75 && w.description)
+            .map((w: any) => w.description.toLowerCase());
+
+          return Array.from(new Set([...labelTags, ...webTags]));
         } catch (err) {
           console.error("Vision API Error:", err);
           return [];

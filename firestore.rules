@@ -44,10 +44,11 @@ service cloud.firestore {
         getUserRole() == 'Photographer' || 
         getUserRole() == 'Club Member'
       );
-      // Update: Admin or the user who created it
+      // Update: Admin or the user who created it, OR someone updating only media stats
       allow update: if isAuth() && (
         isAdmin() || 
-        request.auth.uid == resource.data.createdBy
+        request.auth.uid == resource.data.createdBy ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoCount', 'videoCount', 'coverImage'])
       );
       // Delete: Admin or the user who created it
       allow delete: if isAuth() && (
