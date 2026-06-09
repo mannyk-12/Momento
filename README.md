@@ -38,6 +38,12 @@ The application is fully hosted on Firebase Hosting using Firebase Web Framework
 
 ---
 
+## Technical Considerations & Future Scope
+
+- **Facial Recognition Constraints:** While the initial roadmap included automated user tagging via facial recognition, this feature was deliberately descoped. Google Cloud Vision API explicitly restricts facial recognition capabilities for privacy and compliance reasons. Furthermore, open-source models (such as `DeepFace` and `face-recognition`) were evaluated but deemed insufficiently reliable or too resource-intensive for production-grade, multi-angle group photos in a web environment. As a result, Momento relies on a highly robust manual `@mention` system combined with AI-powered contextual object/scene tagging.
+
+---
+
 ## Local Development Setup
 
 Follow these precise instructions to get a copy of the project running on your local machine.
