@@ -50,8 +50,9 @@ export default function DashboardPage() {
             dynamicCoverImage: data.coverImage || null
           };
           
-          // Privacy Filter: Include if Admin, or Public, or Private & matches club
-          if (role === 'Admin' || !eventData.isPrivate || eventData.clubId === clubId) {
+          // Privacy Filter: Include if Admin, or Public, or Private & matches club, or is an approved uploader
+          const isApprovedUploader = eventData.approvedUploaderIds?.includes(user?.uid || '');
+          if (role === 'Admin' || !eventData.isPrivate || eventData.clubId === clubId || isApprovedUploader) {
             fetchedEvents.push(eventData);
           }
         });

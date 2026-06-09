@@ -60,7 +60,8 @@ export default function EventDetailsPage() {
           const eventData = { id: docSnap.id, ...docSnap.data() } as MomentoEvent;
           
           // Enforce Privacy at the route level
-          if (eventData.isPrivate && eventData.clubId !== clubId && role !== 'Admin') {
+          const isApprovedUploader = eventData.approvedUploaderIds?.includes(user?.uid || '');
+          if (eventData.isPrivate && eventData.clubId !== clubId && role !== 'Admin' && !isApprovedUploader) {
             setAccessDenied(true);
           } else {
             setEvent(eventData);

@@ -14,7 +14,7 @@ import MediaLightbox from '../../components/MediaLightbox';
 type Tab = 'Photos' | 'Events' | 'Users';
 
 export default function SearchPage() {
-  const { clubId, role } = useAuth();
+  const { clubId, role, user } = useAuth();
   
   const [activeTab, setActiveTab] = useState<Tab>('Photos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +79,8 @@ export default function SearchPage() {
         snap.forEach(doc => {
           const e = { id: doc.id, ...doc.data() } as MomentoEvent;
           // Apply privacy filter
-          if (role !== 'Admin' && e.isPrivate && e.clubId !== clubId) return;
+          const isApprovedUploader = e.approvedUploaderIds?.includes(user?.uid || '');
+          if (role !== 'Admin' && e.isPrivate && e.clubId !== clubId && !isApprovedUploader) return;
           
           if (e.title.toLowerCase().includes(lowerQuery) || e.description.toLowerCase().includes(lowerQuery)) {
             results.push(e);
